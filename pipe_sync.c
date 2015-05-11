@@ -64,10 +64,10 @@ main(int argc, char *argv[])
 			sop.sem_num = 0;
 			sop.sem_op = 1;
 			sop.sem_flg = 0;
-			printf("%ld: about to semop at  %s\n", (long) getpid(), currTime("%T"));
+	//		printf("%ld: about to semop at  %s\n", (long) getpid(), currTime("%T"));
 			if(semop(semid, &sop, 1) == -1)
 				errExit("semop");
-			printf("%ld: semop completed at %s\n", (long) getpid(), currTime("%T"));
+	//		printf("%ld: semop completed at %s\n", (long) getpid(), currTime("%T"));
 
             _exit(EXIT_SUCCESS);
 
@@ -78,11 +78,9 @@ main(int argc, char *argv[])
 
     /* Parent comes here; close write end of pipe so we can see EOF */
 	
-    /* Parent may do other work, then synchronizes with children */
-
-    //printf("%s  Parent ready to go\n", currTime("%T"));
+       
 	sop.sem_num = 0;
-	sop.sem_op =  0 - (argc - 1);
+	sop.sem_op =  0 - (argc - 1); //parent will be locked here
 	sop.sem_flg = 0;
 	//printf("%ld: about to semop at  %s\n", (long) getpid(), currTime("%T"));
 	if(semop(semid, &sop, 1) == -1)
@@ -90,8 +88,8 @@ main(int argc, char *argv[])
        
 	printf("%ld: all obstacles removed, parents can do things now %s\n", (long) getpid(), currTime("%T"));
     /* Parent can now carry on to do other things... */
-        //if(semctl(semid, 0, IPC_RMID, dummy) == -1) 
-	//	errExit("semctl");
-        //printf("semid: %d successfully removed\n", semid);
+        if(semctl(semid, 0, IPC_RMID, dummy) == -1) 
+		errExit("semctl");
+        printf("semid: %d successfully removed\n", semid);
     exit(EXIT_SUCCESS);
 }
