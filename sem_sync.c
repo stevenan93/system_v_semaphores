@@ -7,7 +7,8 @@
 * later version. This program is distributed without any warranty.  See   *
 * the file COPYING.gpl-v3 for details.                                    *
 \*************************************************************************/
-
+//Edited By Steven An for Final Exam Take Home Part 1
+//Dr Nguyen, CSC 060 Spring 2015
 #include "curr_time.h"                      /* Declaration of currTime() */
 #include "tlpi_hdr.h"
 #include <sys/sem.h>
