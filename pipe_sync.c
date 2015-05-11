@@ -29,7 +29,7 @@ main(int argc, char *argv[])
 											   
 											   
     
-    key_t semkey;
+        key_t semkey;
 	if((semkey = ftok(".", 'a')) == (key_t)-1){
 		perror("IPC error: ftok");
 		exit(1);
@@ -40,13 +40,12 @@ main(int argc, char *argv[])
 	{
 		errExit("semid");
 	}
+        printf("Semaphore ID: %d\n", semid);
 	union semun arg;
 	struct sembuf sop;
-	arg.val = 0;
+	arg.val = 0; //init semaphore to 0
 	if(semctl(semid, 0, SETVAL, arg) == -1)
 		errExit("semctl");
-	
-    printf("%s  Parent started\n", currTime("%T"));
 
     for (j = 1; j < argc; j++) {
         switch (fork()) {
@@ -59,9 +58,9 @@ main(int argc, char *argv[])
 
             sleep(getInt(argv[j], GN_NONNEG, "sleep-time"));
                                             /* Simulate processing */
-            printf("%s  Child %d (PID=%ld) closing pipe\n",
+            printf("%s  Child %d (PID=%ld) unlocking\n",
                     currTime("%T"), j, (long) getpid());
-            /* Child now carries on to do other things... */
+            /* Child increments by one */
 			sop.sem_num = 0;
 			sop.sem_op = 1;
 			sop.sem_flg = 0;
@@ -81,15 +80,18 @@ main(int argc, char *argv[])
 	
     /* Parent may do other work, then synchronizes with children */
 
-    printf("%s  Parent ready to go\n", currTime("%T"));
+    //printf("%s  Parent ready to go\n", currTime("%T"));
 	sop.sem_num = 0;
-	sop.sem_op = -3;
+	sop.sem_op =  0 - (argc - 1);
 	sop.sem_flg = 0;
-	printf("%ld: about to semop at  %s\n", (long) getpid(), currTime("%T"));
+	//printf("%ld: about to semop at  %s\n", (long) getpid(), currTime("%T"));
 	if(semop(semid, &sop, 1) == -1)
 		errExit("semop");
-	printf("%ld: semop completed at %s\n", (long) getpid(), currTime("%T"));
+       
+	printf("%ld: all obstacles removed, parents can do things now %s\n", (long) getpid(), currTime("%T"));
     /* Parent can now carry on to do other things... */
-
+        //if(semctl(semid, 0, IPC_RMID, dummy) == -1) 
+	//	errExit("semctl");
+        //printf("semid: %d successfully removed\n", semid);
     exit(EXIT_SUCCESS);
 }
