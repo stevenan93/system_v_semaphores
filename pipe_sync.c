@@ -19,7 +19,7 @@
 int
 main(int argc, char *argv[])
 {
-    int j, dummy;
+    int j, dummy, semid;
 
     if (argc < 2 || strcmp(argv[1], "--help") == 0)
         usageErr("%s sleep-time...\n", argv[0]);
@@ -34,14 +34,13 @@ main(int argc, char *argv[])
 		perror("IPC error: ftok");
 		exit(1);
 	}
-	
-	int semid = semget(semkey, 1, IPC_CREAT | S_IRUSR | S_IWUSR);
+	union semun arg;
+	semid = semget(semkey, 1, IPC_CREAT | S_IRUSR | S_IWUSR);
 	if(semid == -1)
 	{
 		errExit("semid");
 	}
-	union semun arg;
-	struct sembuf sop;
+    printf("Semaphore ID : %d\n", semid);
 	arg.val = 0;
 	if(semctl(semid, 0, SETVAL, arg) == -1)
 		errExit("semctl");
@@ -59,9 +58,10 @@ main(int argc, char *argv[])
 
             sleep(getInt(argv[j], GN_NONNEG, "sleep-time"));
                                             /* Simulate processing */
-            printf("%s  Child %d (PID=%ld) closing pipe\n",
+            printf("%s  Child %d (PID=%ld) unlocking\n",
                     currTime("%T"), j, (long) getpid());
             /* Child now carries on to do other things... */
+            struct sembuf sop;
 			sop.sem_num = 0;
 			sop.sem_op = 1;
 			sop.sem_flg = 0;
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
     /* Parent comes here; close write end of pipe so we can see EOF */
 	
     /* Parent may do other work, then synchronizes with children */
-
+    struct sembuf sop;
     printf("%s  Parent ready to go\n", currTime("%T"));
 	sop.sem_num = 0;
 	sop.sem_op = -3;
